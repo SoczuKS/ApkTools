@@ -1,3 +1,4 @@
+import os
 import xml.dom.minidom
 import sys
 from enum import Enum
@@ -10,6 +11,7 @@ class AppConfig:
         self.apkDir = './'
         self.apktool = self.apkDir + '/apktool.jar'
         self.outputDir = self.apkDir + '/apk/'
+        self.skipSources = True
 
 
 def parameters_validation(app_config):
@@ -79,9 +81,31 @@ def analyze_parameters():
     return app_config
 
 
+def decompile_apks(app_config):
+    apk_dir_path = Path(app_config.apkDir)
+
+    for file in apk_dir_path.iterdir():
+        if file.suffix == '.apk':
+            file_output_dir_name = app_config.outputDir + file.stem
+            file_full_name = app_config.apkDir + file.name
+
+            cmd = 'java -jar ' + app_config.apktool
+            cmd += ' d ' + file_full_name
+            if app_config.skipSources:
+                cmd += ' -s '
+            cmd += ' -o ' + file_output_dir_name
+
+            os.system(cmd)
+
+
+def do_apk_stuff(app_config):
+    decompile_apks(app_config)
+
+
 def main():
     app_config = analyze_parameters()
     parameters_validation(app_config)
+    do_apk_stuff(app_config)
 
 
 main()
