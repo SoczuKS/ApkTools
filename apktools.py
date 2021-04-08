@@ -7,11 +7,18 @@ from urllib import request
 
 
 class AppConfig:
+    class AppType(Enum):
+        UNKNOWN = 0
+        SINGLE = 1
+        SPLIT_IN_2 = 2
+        SPLIT_IN_4 = 4
+
     def __init__(self):
         self.apkDir = './'
         self.apktool = self.apkDir + '/apktool.jar'
         self.outputDir = self.apkDir + '/apk/'
         self.skipSources = True
+        self.appType = AppConfig.AppType.UNKNOWN
 
 
 def parameters_validation(app_config):
@@ -89,7 +96,7 @@ def decompile_apks(app_config):
             file_output_dir_name = app_config.outputDir + file.stem
             file_full_name = app_config.apkDir + file.name
 
-            cmd = 'java -jar ' + app_config.apktool
+            cmd = 'java -jar ' + app_config.apktool + ' -q'
             cmd += ' d ' + file_full_name
             if app_config.skipSources:
                 cmd += ' -s '
@@ -98,8 +105,49 @@ def decompile_apks(app_config):
             os.system(cmd)
 
 
+def detect_app_type(app_config):
+    apk_files_counter = 0
+    apk_dir_path = Path(app_config.apkDir)
+
+    for file in apk_dir_path.iterdir():
+        if file.suffix == '.apk':
+            apk_files_counter += 1
+
+    if apk_files_counter == 1:
+        app_config.appType = AppConfig.AppType.SINGLE
+    elif apk_files_counter == 2:
+        app_config.appType = AppConfig.AppType.SPLIT_IN_2
+    elif apk_files_counter == 4:
+        app_config.appType = AppConfig.AppType.SPLIT_IN_4
+
+
+def do_stuff_single(app_config):
+    print('Processing files...')
+
+
+def do_stuff_split_in_2(app_config):
+    print('Processing files...')
+
+
+def do_stuff_split_in_4(app_config):
+    print('Processing files...')
+
+
 def do_apk_stuff(app_config):
+    print('Detecting app type...')
+    detect_app_type(app_config)
+
+    print('Decompiling apk...')
     decompile_apks(app_config)
+
+    if app_config.appType == AppConfig.AppType.SINGLE:
+        do_stuff_single(app_config)
+
+    elif app_config.appType == AppConfig.AppType.SPLIT_IN_2:
+        do_stuff_split_in_2(app_config)
+
+    elif app_config.appType == AppConfig.AppType.SPLIT_IN_4:
+        do_stuff_split_in_4(app_config)
 
 
 def main():
