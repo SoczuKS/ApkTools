@@ -18,6 +18,7 @@ class AppConfig:
         self.apktool = self.apkDir + '/apktool.jar'
         self.outputDir = self.apkDir + '/apk/'
         self.skipSources = True
+        self.forceApktools = False
         self.appType = AppConfig.AppType.UNKNOWN
 
 
@@ -60,6 +61,13 @@ def analyze_parameters():
 
     for i in range(1, len(sys.argv)):
         if sys.argv[i][0] == '-':
+            if sys.argv[i] == '--force-apktool' or sys.argv[i] == '-f':
+                app_config.forceApktools = True
+                continue
+            elif sys.argv[i] == '-s' or sys.argv[i] == '--skip-sources':
+                app_config.skipSources = True
+                continue
+
             current = {
                 '-output': CurrentArg.OUTPUT_DIR,
                 '-apktool': CurrentArg.APKTOOL_PATH
