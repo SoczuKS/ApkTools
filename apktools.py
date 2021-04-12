@@ -1,5 +1,5 @@
 import os
-import xml.dom.minidom
+import xml.etree.ElementTree
 import sys
 from enum import Enum
 from pathlib import Path
@@ -158,6 +158,16 @@ def do_stuff_split_in_4(app_config):
 
     # Step 2
     # Open the AndroidManifest.xml in the decompiled base APK and remove this setup: android:isSplitRequired="true"
+    et = xml.etree.ElementTree.parse(dst + "/AndroidManifest.xml")
+    root = et.getroot()
+    application_tag = root.find('application')
+
+    for attr in application_tag.attrib:
+        if not attr.find('isSplitRequired') == -1:
+            application_tag.attrib.pop(attr)
+            break
+
+    et.write(dst + "/AndroidManifest.xml", xml_declaration=True, encoding='utf-8')
 
     # Step 3
     # Open the apktool.yml and add in the doNotCompress tag of the base.apk everything you have in the other split APKs
