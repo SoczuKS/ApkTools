@@ -33,19 +33,19 @@ def parameters_validation(app_config):
         request.urlretrieve('https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.5.0.jar', apktool_path)
 
     if not apk_dir_path.is_dir():
-        print("Given apks directory doesn't exists")
+        print('Given apks directory does not exists')
         exit(3)
 
     if not output_path.exists():
         output_path.mkdir(parents=True)
     elif not output_path.is_dir():
-        print("Given output location isn't a directory")
+        print('Given output location is not a directory')
         exit(4)
 
 
 def analyze_parameters():
     if len(sys.argv) == 1:
-        print("Too few arguments")
+        print('Too few arguments')
         exit(1)
 
     class CurrentArg(Enum):
@@ -87,7 +87,7 @@ def analyze_parameters():
             current = CurrentArg.APK_DIR
 
     if not apk_dir_set:
-        print("No apk directory provided")
+        print('No apk directory provided')
         exit(2)
     if not output_dir_set:
         app_config.outputDir = app_config.apkDir + '/apk/'
@@ -147,8 +147,8 @@ def do_stuff_split_in_4(app_config):
 
     # Step 1
     # Put all files of the split APKs to the base APK but do not override files
-    print("Copying...")
-    dst = app_config.outputDir + "/base"
+    print('Copying...')
+    dst = app_config.outputDir + '/base'
     dst_path = Path(dst)
     for d in output_dir_path.iterdir():
         if d.is_dir():
@@ -158,7 +158,7 @@ def do_stuff_split_in_4(app_config):
 
     # Step 2
     # Open the AndroidManifest.xml in the decompiled base APK and remove this setup: android:isSplitRequired="true"
-    et = xml.etree.ElementTree.parse(dst + "/AndroidManifest.xml")
+    et = xml.etree.ElementTree.parse(dst + '/AndroidManifest.xml')
     root = et.getroot()
     application_tag = root.find('application')
 
@@ -167,7 +167,7 @@ def do_stuff_split_in_4(app_config):
             application_tag.attrib.pop(attr)
             break
 
-    et.write(dst + "/AndroidManifest.xml", xml_declaration=True, encoding='utf-8')
+    et.write(dst + '/AndroidManifest.xml', xml_declaration=True, encoding='utf-8')
 
     # Step 3
     # Open the apktool.yml and add in the doNotCompress tag of the base.apk everything you have in the other split APKs
@@ -179,7 +179,7 @@ def do_stuff_split_in_4(app_config):
 def copydir(src_path, dst_path):
     # Recursive copy of dir tree without overwriting
     for item in src_path.iterdir():
-        dst = Path(dst_path.__str__() + "/" + item.name)
+        dst = Path(dst_path.__str__() + '/' + item.name)
         if item.is_dir():
             if dst.exists():
                 copydir(item, dst)
