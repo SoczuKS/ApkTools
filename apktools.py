@@ -4,6 +4,7 @@ import sys
 from enum import Enum
 from pathlib import Path
 from urllib import request
+import shutil
 
 
 class AppConfig:
@@ -135,10 +136,48 @@ def do_stuff_single(app_config):
 
 def do_stuff_split_in_2(app_config):
     print('Processing files...')
+    # Things to do:
+    # 1. Take the lib folder of the config.arch APK and add it to the decompiled base APK.
+    # 2. Open AndroidManifest.xml in the decompiled base APK and remove this setup: android:isSplitRequired="true".
 
 
 def do_stuff_split_in_4(app_config):
     print('Processing files...')
+    output_dir_path = Path(app_config.outputDir)
+
+    # Step 1
+    # Put all files of the split APKs to the base APK but do not override files
+    print("Copying...")
+    dst = app_config.outputDir + "/base"
+    dst_path = Path(dst)
+    for d in output_dir_path.iterdir():
+        if d.is_dir():
+            if not d.name == 'base':
+                src_path = Path(d)
+                copydir(src_path, dst_path)
+
+    # Step 2
+    # Open the AndroidManifest.xml in the decompiled base APK and remove this setup: android:isSplitRequired="true"
+
+    # Step 3
+    # Open the apktool.yml and add in the doNotCompress tag of the base.apk everything you have in the other split APKs
+
+    # Step 4
+    # Check the .xml files in the res/value folder in all the split APKs and add whats missing inside that files from the other split APKs to the base APK .xml files
+
+
+def copydir(src_path, dst_path):
+    # Recursive copy of dir tree without overwriting
+    for item in src_path.iterdir():
+        dst = Path(dst_path.__str__() + "/" + item.name)
+        if item.is_dir():
+            if dst.exists():
+                copydir(item, dst)
+            else:
+                shutil.copytree(item, dst)
+        elif item.is_file():
+            if not dst.exists():
+                shutil.copy2(item, dst)
 
 
 def do_apk_stuff(app_config):
