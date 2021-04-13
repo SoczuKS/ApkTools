@@ -5,6 +5,7 @@ from enum import Enum
 from pathlib import Path
 from urllib import request
 import shutil
+import yaml
 
 
 class AppConfig:
@@ -130,6 +131,21 @@ def detect_app_type(app_config):
         app_config.appType = AppConfig.AppType.SPLIT_IN_4
 
 
+def replace_double_exclamation_mark_with_comment(file):
+    base_lines = []
+    with open(file) as infile:
+        first_line = True
+        for line in infile:
+            if first_line:
+                line = line.replace('!!', '#')
+                first_line = False
+            base_lines.append(line)
+
+    with open(file, 'w') as outfile:
+        for line in base_lines:
+            outfile.write(line)
+
+
 def do_stuff_single(app_config):
     print('Processing files...')
 
@@ -171,6 +187,38 @@ def do_stuff_split_in_4(app_config):
 
     # Step 3
     # Open the apktool.yml and add in the doNotCompress tag of the base.apk everything you have in the other split APKs
+    # Replace first line with !! to comment before parsing due to problem with parse it
+    replace_double_exclamation_mark_with_comment(dst + '/apktool.yml')
+
+    with open(dst + '/apktool.yml', 'r+') as base_yaml_file:
+        base_yaml_doc = yaml.safe_load(base_yaml_file)
+
+    # sth to do with base_yaml_file
+    final_no_compress_set = set(base_yaml_doc['doNotCompress'])
+
+    # Open others apktool.yml and copy doNotCompress array
+    for d in output_dir_path.iterdir():
+        if d.is_dir() and not d.name == 'base':
+            replace_double_exclamation_mark_with_comment(d.__str__() + '/apktool.yml')
+
+            with open(d.__str__() + '/apktool.yml') as another_yaml_file:
+                another_yaml_doc = yaml.safe_load(another_yaml_file)
+                for dnc in another_yaml_doc['doNotCompress']:
+                    final_no_compress_set.add(dnc)
+
+    base_yaml_doc['doNotCompress'] = list(final_no_compress_set)
+
+    with open(dst + '/apktool.yml', 'w') as base_yaml_file:
+        yaml.dump(base_yaml_doc, base_yaml_file)
+
+    # Write back with first line
+    base_lines = ['!!brut.androlib.meta.MetaInfo\n']
+    with open(dst + '/apktool.yml') as infile:
+        for line in infile:
+            base_lines.append(line)
+    with open(dst + '/apktool.yml', 'w') as outfile:
+        for line in base_lines:
+            outfile.write(line)
 
     # Step 4
     # Check the .xml files in the res/value folder in all the split APKs and add whats missing inside that files from the other split APKs to the base APK .xml files
